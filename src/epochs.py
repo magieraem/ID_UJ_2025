@@ -54,6 +54,7 @@ def create_epochs(raw, trigger_type, tmin=0.0, tmax=2.0, baseline=None, write_in
         event_id=exp_event_id,
         tmin=tmin,
         tmax=tmax - 1.0 / raw.info['sfreq'],
+        reject_by_annotation=False,
         baseline=baseline,
         picks="eeg",
         preload=True,

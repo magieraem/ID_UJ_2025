@@ -14,7 +14,7 @@ def set_annotations_from_trigger_file(raw, trigg_df, write_info=True):
     """
 
     # Create annotations
-    events = mne.find_events(raw)
+    events = mne.find_events(raw, min_duration=0.002)
     if len(events) == 0:
         write("Error: No events found!", write_info)
         return None
