@@ -1,10 +1,4 @@
 # ID_UJ_2025
-Preprocessing pipline for EEG data from ID.UJ 2025
-
-TODO: kontrola interpolacji w ROI
-
-TODO: liczymi ICA i korelujemy z EOG
-
-TODO: sprawdzenie pętli 1 do 60
-
-TODO: usuwanie zaszunionych kanałów
+1. set epochs length to 0-30s
+2. set epoch's min_duration to 2 / raw.info["sfreq"]
+3. Added error message wen triggers are mismatched with triggerman
