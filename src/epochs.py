@@ -37,7 +37,16 @@ def create_epochs(raw, trigger_type, tmin=0.0, tmax=2.0, baseline=None, write_in
     events, event_id = mne.events_from_annotations(raw)
 
     # Select only triggers starting with the specified prefix
-    exp_event_id = {name: code for name, code in event_id.items() if name.startswith(trigger_type)}
+    exp_event_id = {
+    name: code
+    for name, code in event_id.items()
+    if f"_{trigger_type}_" in f"_{name}_"
+}
+    
+    #CHAT
+    print("Szukany trigger:", repr(trigger_type))
+    print("Liczba dopasowanych triggerów:", len(exp_event_id))
+    print("Przykłady:", list(exp_event_id.keys())[:5])
 
     if not exp_event_id:
         write(f"Error: No '{trigger_type}' triggers found", write_info)
