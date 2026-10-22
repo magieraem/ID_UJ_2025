@@ -16,6 +16,8 @@ from src.epochs import create_epochs
 # matplotlib.use('TkAgg')
 mne.set_log_level('ERROR')
 
+#JS2812.bdf to small to be analysed
+
 # Paths to data folders
 BEH_PATH = "/mnt/data/ociepka_idUJ/BEH/Raven_APM_EEG/results" # Path to the folder with behavioral data files.
 EEG_PATH = "/mnt/data/ociepka_idUJ/BDF/2_Raven" # Path to the folder with raw EEG data files.
@@ -49,20 +51,50 @@ CV = 10 # Number of cross‑validation folds used by AutoReject.
 
 # Output and visualization settings
 SAVE_DATA = True # If True, save preprocessed epochs to disk as FIF files.
-OVERWRITE_DATA = True
+OVERWRITE_DATA = False
 WRITE_INFO = True # If True, print textual progress and summary information.
-PLOT_INFO = True # If True, show diagnostic plots (e.g., rejected epochs, reject_log).
+PLOT_INFO = False # If True, show diagnostic plots (e.g., rejected epochs, reject_log).
 
 DATA = prepare_files_info(eeg_path=EEG_PATH, beh_path=BEH_PATH)
 
+EXCLUDED_IDS = {"JS2812"}
+
+
 for part in tqdm(DATA):
-    write(part['ID'], WRITE_INFO)
-    file_name = f"{part['ID']}_{part['sex']}_{part['age']}_preprocessed-epo.fif"
-    if not OVERWRITE_DATA and file_name in os.listdir(RESULT_PATH):
-        write("File already exists", WRITE_INFO)
+    if part["ID"] in EXCLUDED_IDS:
+        msg = f"{part['ID']}: excluded — invalid BDF file"
+        print(msg)
+        write(msg, WRITE_INFO)
         continue
+    
+    file_name = f"{part['ID']}_{part['sex']}_{part['age']}_preprocessed-epo.fif"
+    output_path = os.path.join(RESULT_PATH, file_name)
+    
+    if not OVERWRITE_DATA and os.path.isfile(output_path):
+        msg = f"{part['ID']}: output already exists — skipped"
+        print(msg)
+        write(msg, WRITE_INFO)
+        continue
+    
+    write(part["ID"], WRITE_INFO)
+
     # --- load eeg ---
-    raw = mne.io.read_raw(part['eeg_file'], preload=True, verbose=False)
+    try:
+        raw = mne.io.read_raw(
+            part["eeg_file"],
+            preload=True,
+            verbose=False
+        )
+    except Exception as e:
+        msg = (
+            f"EEG file could not be read; participant skipped. "
+            f"ID={part['ID']}; file={part['eeg_file']}; "
+            f"error={type(e).__name__}: {e}"
+        )
+        print(msg)
+        write(msg, WRITE_INFO)
+        continue
+
     trigg_df = pd.read_csv(part['trigg_file'], comment='#')
 
     # --- montage ---
@@ -174,7 +206,7 @@ for part in tqdm(DATA):
         os.makedirs(result_dir, exist_ok=True)
 
         output_file = os.path.join(result_dir, file_name)
-        epochs.save(output_file, verbose=False, overwrite=True)
+        epochs.save(output_file, verbose=False, overwrite=False)
 
         write(f"Data saved to {output_file}", WRITE_INFO)
 
