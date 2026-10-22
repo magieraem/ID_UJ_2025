@@ -8,9 +8,10 @@ def set_annotations_from_trigger_file(raw, trigg_df, write_info=True):
     """
     Detect EEG triggers, validate them against the CSV, and create annotations.
 
+    If EEG contains exactly one extra initial trigger with code 4, remove it
+    only when the remaining trigger sequence exactly matches the CSV.
+
     Returns None if trigger counts or codes do not match.
-    Handles the verified initial extra code 65284 in IZ2310 only
-    when the specific initial Status pattern is present.
     """
 
     if "trigger_no" not in trigg_df.columns:
@@ -48,6 +49,21 @@ def set_annotations_from_trigger_file(raw, trigg_df, write_info=True):
 
     # EEG: 65281, 65282, ... → 1, 2, ...
     actual_codes = events[:, 2].astype(int) - 65280
+    
+    # Correct a verified extra initial trigger only if the complete
+    # remaining sequence matches the CSV exactly.
+    if (
+        len(actual_codes) == len(expected_codes) + 1
+        and actual_codes[0] == 4
+        and np.array_equal(actual_codes[1:], expected_codes)
+    ):
+        write(
+            "WARNING: Extra initial EEG trigger 4 detected and omitted; "
+            "remaining trigger sequence matches CSV exactly.",
+            write_info,
+        )
+        events = events[1:]
+        actual_codes = actual_codes[1:]
 
     if len(actual_codes) != len(expected_codes):
         write(
